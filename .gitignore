@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### CSV/TXT Files ###
+src/main/resources/process/*
+!src/main/resources/process/.gitkeep
