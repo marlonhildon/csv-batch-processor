@@ -2,33 +2,30 @@ package br.com.mh.csv.batch;
 
 import br.com.mh.csv.domain.CompraRaw;
 import br.com.mh.csv.domain.FileColumn;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.ItemReader;
-import org.springframework.batch.item.NonTransientResourceException;
-import org.springframework.batch.item.ParseException;
-import org.springframework.batch.item.UnexpectedInputException;
-import org.springframework.batch.item.file.DefaultBufferedReaderFactory;
+import org.springframework.batch.item.*;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
-public class CompraItemReader implements ItemReader<CompraRaw> {
+@Getter
+@Setter
+public class CompraItemReader implements ItemReader<CompraRaw>, ItemStream {
 
-    @Value("process/base_teste.txt")
-    private Resource inputFile;
-
+//    @Value("process/base_teste.txt")
+//    private Resource inputFile;
+    private ExecutionContext executionContext;
     private int currentLine = 0;
-    private Boolean isLinesSkipped = Boolean.FALSE;
     private LineMapper<CompraRaw> lineMapper = this.getLineMapper();
-    private BufferedReader bufferedReader;
+    private transient BufferedReader bufferedReader;
+    private static final String bufferedReaderKey = "bufferedReader";
+    private static final String allItemsReadedKey = "allItemsReaded";
 
     /**
      * Processa os arquivos sem delimitadores específicos. <br>
@@ -43,15 +40,15 @@ public class CompraItemReader implements ItemReader<CompraRaw> {
     @Override
     public CompraRaw read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         CompraRaw compraRaw = null;
-        String line;
+        String line = null;
 
-        //TODO: substituir por ItemReaderListener, usar o método beforeRead() para instanciar o BufferedReader e pular linhas apenas uma vez
-        if (bufferedReader == null) {
-            bufferedReader = new DefaultBufferedReaderFactory().create(inputFile, StandardCharsets.UTF_8.name());
-        }
+//        //TODO: substituir por ItemReaderListener, usar o método beforeRead() para instanciar o BufferedReader e pular linhas apenas uma vez
+//        if (bufferedReader == null) {
+//            bufferedReader = new DefaultBufferedReaderFactory().create(inputFile, StandardCharsets.UTF_8.name());
+//        }
 
-        this.skipLines(1);
-        this.isLinesSkipped = Boolean.TRUE;
+//        this.skipLines(1);
+//        this.isLinesSkipped = Boolean.TRUE;
 
         try {
             if((line = bufferedReader.readLine()) != null) {
@@ -63,6 +60,10 @@ public class CompraItemReader implements ItemReader<CompraRaw> {
         } catch (Exception exception) {
             log.error("Erro ao ler arquivo de entrada: {}", exception.getMessage());
             throw new RuntimeException("Erro ao ler arquivo de entrada: " + exception.getMessage());
+        } finally {
+            if(line == null) {
+                executionContext.put(allItemsReadedKey, Boolean.TRUE);
+            }
         }
 
     }
@@ -85,17 +86,32 @@ public class CompraItemReader implements ItemReader<CompraRaw> {
         return defaultLineMapper;
     }
 
-    /**
-     * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.
-     * @param linesToSkip a quantidade de linhas a serem puladas
-     * @throws IOException lançável pelo método readLine do BufferedReader
-     */
-    private void skipLines(int linesToSkip) throws IOException {
-        if (!this.isLinesSkipped) {
-            for(int i=1; i<=linesToSkip; i++) {
-                this.bufferedReader.readLine();
-            }
-        }
+    @Override
+    public void open(ExecutionContext executionContext) throws ItemStreamException {
+        this.executionContext = executionContext;
     }
+
+    @Override
+    public void update(ExecutionContext executionContext) throws ItemStreamException {
+        this.bufferedReader = (BufferedReader) this.executionContext.get(bufferedReaderKey);
+    }
+
+    @Override
+    public void close() throws ItemStreamException {
+
+    }
+
+//    /**
+//     * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.
+//     * @param linesToSkip a quantidade de linhas a serem puladas
+//     * @throws IOException lançável pelo método readLine do BufferedReader
+//     */
+//    private void skipLines(int linesToSkip) throws IOException {
+//        if (!this.isLinesSkipped) {
+//            for(int i=1; i<=linesToSkip; i++) {
+//                this.bufferedReader.readLine();
+//            }
+//        }
+//    }
 
 }

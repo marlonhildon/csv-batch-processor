@@ -4,6 +4,7 @@ import br.com.mh.csv.batch.CompraItemProcessor;
 import br.com.mh.csv.batch.CompraItemReader;
 import br.com.mh.csv.batch.CompraItemWriter;
 import br.com.mh.csv.domain.CompraRaw;
+import br.com.mh.csv.listener.CompraStepExecutionListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -26,6 +27,9 @@ public class SpringBatchConfig {
 
     @Autowired
     private StepBuilderFactory steps;
+
+    @Autowired
+    private CompraStepExecutionListener compraStepExecutionListener;
 
     @Bean
     public ItemReader<CompraRaw> itemReader() {
@@ -52,6 +56,7 @@ public class SpringBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .listener(compraStepExecutionListener)
                 .build();
     }
 
