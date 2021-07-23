@@ -1,9 +1,9 @@
 package br.com.mh.csv.conf;
 
 import br.com.mh.csv.batch.CompraItemProcessor;
+import br.com.mh.csv.batch.CompraItemReader;
 import br.com.mh.csv.batch.CompraItemWriter;
-import br.com.mh.csv.domain.CompraDomain;
-import br.com.mh.csv.domain.FileColumn;
+import br.com.mh.csv.domain.CompraRaw;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -12,15 +12,10 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
-import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.Resource;
 
 @Configuration
 @EnableBatchProcessing
@@ -32,42 +27,28 @@ public class SpringBatchConfig {
     @Autowired
     private StepBuilderFactory steps;
 
-    @Value("process/base_teste.txt")
-    private Resource inputFile;
-
-    private final int FIRST_LINE = 1;
-
     @Bean
-    public ItemReader<CompraDomain> itemReader() {
-        return new FlatFileItemReaderBuilder<CompraDomain>()
-                .name("compraItemReader")
-                .resource(inputFile)
-                .linesToSkip(FIRST_LINE)
-                .lineTokenizer(new FixedLengthTokenizer() {{
-                    setNames(CompraDomain.getAllOrderedAttributesNamesArray());
-                    setColumns(FileColumn.getAllOrderedColumnRanges());
-                }})
-                .fieldSetMapper(new BeanWrapperFieldSetMapper<>() {{ setTargetType(CompraDomain.class); }})
-                .build();
+    public ItemReader<CompraRaw> itemReader() {
+        return new CompraItemReader();
     }
 
     @Bean
-    public ItemProcessor<CompraDomain, CompraDomain> itemProcessor() {
+    public ItemProcessor<CompraRaw, CompraRaw> itemProcessor() {
         return new CompraItemProcessor();
     }
 
     @Bean
-    public ItemWriter<CompraDomain> itemWriter() {
+    public ItemWriter<CompraRaw> itemWriter() {
         return new CompraItemWriter();
     }
 
     @Bean(name = "firstStep")
-    protected Step firstStep(ItemReader<CompraDomain> reader,
-                            ItemProcessor<CompraDomain, CompraDomain> processor,
-                             ItemWriter<CompraDomain> writer) {
+    protected Step firstStep(ItemReader<CompraRaw> reader,
+                            ItemProcessor<CompraRaw, CompraRaw> processor,
+                             ItemWriter<CompraRaw> writer) {
 
         return steps.get("firstStep")
-                .<CompraDomain, CompraDomain> chunk(5000)
+                .<CompraRaw, CompraRaw> chunk(5000)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)

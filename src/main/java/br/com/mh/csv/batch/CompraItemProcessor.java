@@ -1,13 +1,13 @@
 package br.com.mh.csv.batch;
 
-import br.com.mh.csv.domain.CompraDomain;
+import br.com.mh.csv.domain.CompraRaw;
 import org.springframework.batch.item.ItemProcessor;
 
-public class CompraItemProcessor implements ItemProcessor<CompraDomain, CompraDomain> {
+public class CompraItemProcessor implements ItemProcessor<CompraRaw, CompraRaw> {
 
     @Override
-    public CompraDomain process(CompraDomain compraDomain) throws Exception {
-        return compraDomain;
+    public CompraRaw process(CompraRaw compraRaw) throws Exception {
+        return compraRaw;
     }
 
 }
