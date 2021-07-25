@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
+import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.DefaultBufferedReaderFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 @Slf4j
 @Component
@@ -22,26 +22,28 @@ public class CompraStepExecutionListener implements StepExecutionListener {
     @Value("process/base_teste.txt")
     private Resource inputFile;
 
-    @Value("${lines.skip}")
+    @Value("${file.lines.skip}")
     private int linesToSkip;
 
-    private static final String fileReaderKey = "fileReader";
-    private static final String isReadingOverKey = "isReadingOver";
+    @Value("${file.reader.key}")
+    private String fileReaderKey;
+
+    @Value("${file.name.key}")
+    private String fileNameKey;
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
-        FileReader fileReader = null;
-        BufferedReader bufferedReader = null;
+        FileReader fileReader;
+        BufferedReader bufferedReader;
 
         try {
             if (!stepExecution.getExecutionContext().containsKey(fileReaderKey)) {
                 bufferedReader = this.getBufferedReaderInstance();
                 fileReader = FileReader.builder().bufferedReader(bufferedReader).build();
-                stepExecution.getExecutionContext().put(fileReaderKey, FileReader.builder().bufferedReader(bufferedReader).build());
                 fileReader.skipLines(linesToSkip, bufferedReader);
-            }
-            if (!stepExecution.getExecutionContext().containsKey(isReadingOverKey)) {
-                stepExecution.getExecutionContext().put(isReadingOverKey, Boolean.FALSE);
+
+                stepExecution.getExecutionContext().put(fileReaderKey, FileReader.builder().bufferedReader(bufferedReader).build());
+                stepExecution.getExecutionContext().putString(fileNameKey, this.inputFile.getFilename());
             }
         } catch(IOException e) {
             log.error("Falha no uso do BufferedReader: {}", e.getMessage());
@@ -61,7 +63,5 @@ public class CompraStepExecutionListener implements StepExecutionListener {
         log.info("Instanciando o BufferedReader");
         return new DefaultBufferedReaderFactory().create(inputFile, StandardCharsets.UTF_8.name());
     }
-
-
 
 }

@@ -1,22 +1,41 @@
 package br.com.mh.csv.batch;
 
+import br.com.mh.csv.domain.Compra;
 import br.com.mh.csv.domain.CompraRaw;
+import br.com.mh.csv.util.CompraMapper;
 import br.com.mh.csv.util.FileReader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.file.LineMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.BufferedReader;
 import java.util.Objects;
 
 @Slf4j
-public class CompraItemReader implements ItemStreamReader<CompraRaw> {
+public class CompraItemReader implements ItemStreamReader<Compra> {
 
-    private int currentLineReaded = 0;
+    @Value("${file.reader.key}")
+    private String fileReaderKey;
+
+    @Value("${file.line.key}")
+    private String fileLineKey;
+
+    @Value("${file.name.key}")
+    private String fileNameKey;
+
+    @Value("${file.lines.skip}")
+    private int linesToSkip;
+
+    @Autowired
+    private CompraMapper compraMapper;
+
+    private int currentLineReaded = linesToSkip;
     private FileReader fileReader;
     private BufferedReader bufferedReader;
     private LineMapper<CompraRaw> lineMapper;
-    private static final String fileReaderKey = "fileReader";
+    private String fileName;
 
     /**
      * Processa os arquivos sem delimitadores específicos. <br>
@@ -29,7 +48,7 @@ public class CompraItemReader implements ItemStreamReader<CompraRaw> {
      * @throws NonTransientResourceException padrão da interface ItemReader
      */
     @Override
-    public CompraRaw read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+    public Compra read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         CompraRaw compraRaw = null;
         String line = null;
 
@@ -38,9 +57,8 @@ public class CompraItemReader implements ItemStreamReader<CompraRaw> {
                 ++currentLineReaded;
                 compraRaw = this.lineMapper.mapLine(line, currentLineReaded);
             }
-            return compraRaw;
+            return this.mapCompraRawToCompra(compraRaw, this.currentLineReaded, this.fileName);
         } catch (Exception exception) {
-            log.error("Erro ao ler arquivo de entrada: {}", exception.getMessage());
             throw new RuntimeException("Erro ao ler arquivo de entrada: " + exception.getMessage());
         } finally {
             if(line == null) {
@@ -55,6 +73,8 @@ public class CompraItemReader implements ItemStreamReader<CompraRaw> {
         this.fileReader = Objects.requireNonNull((FileReader) executionContext.get(fileReaderKey));
         this.lineMapper = this.fileReader.getLineMapper();
         this.bufferedReader = this.fileReader.getBufferedReader();
+        this.fileName = executionContext.getString(fileNameKey);
+        this.currentLineReaded += linesToSkip;
     }
 
     @Override
@@ -65,6 +85,18 @@ public class CompraItemReader implements ItemStreamReader<CompraRaw> {
     @Override
     public void close() throws ItemStreamException {
 
+    }
+
+    private Compra mapCompraRawToCompra(CompraRaw compraRaw, Integer currentLineReaded, String fileName) {
+        Compra compra = null;
+
+        if(compraRaw != null) {
+            compra = this.compraMapper.toCompra(compraRaw);
+            compra.setLinhaArquivo(currentLineReaded);
+            compra.setNomeArquivo(fileName);
+        }
+
+        return compra;
     }
 
 }

@@ -3,7 +3,8 @@ package br.com.mh.csv.conf;
 import br.com.mh.csv.batch.CompraItemProcessor;
 import br.com.mh.csv.batch.CompraItemReader;
 import br.com.mh.csv.batch.CompraItemWriter;
-import br.com.mh.csv.domain.CompraRaw;
+import br.com.mh.csv.domain.Compra;
+import br.com.mh.csv.domain.CompraDomain;
 import br.com.mh.csv.listener.CompraStepExecutionListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
@@ -32,27 +33,27 @@ public class SpringBatchConfig {
     private CompraStepExecutionListener compraStepExecutionListener;
 
     @Bean
-    public ItemReader<CompraRaw> itemReader() {
+    public ItemReader<Compra> itemReader() {
         return new CompraItemReader();
     }
 
     @Bean
-    public ItemProcessor<CompraRaw, CompraRaw> itemProcessor() {
+    public ItemProcessor<Compra, CompraDomain> itemProcessor() {
         return new CompraItemProcessor();
     }
 
     @Bean
-    public ItemWriter<CompraRaw> itemWriter() {
+    public ItemWriter<CompraDomain> itemWriter() {
         return new CompraItemWriter();
     }
 
     @Bean(name = "firstStep")
-    protected Step firstStep(ItemReader<CompraRaw> reader,
-                            ItemProcessor<CompraRaw, CompraRaw> processor,
-                             ItemWriter<CompraRaw> writer) {
+    protected Step firstStep(ItemReader<Compra> reader,
+                            ItemProcessor<Compra, CompraDomain> processor,
+                             ItemWriter<CompraDomain> writer) {
 
         return steps.get("firstStep")
-                .<CompraRaw, CompraRaw> chunk(5000)
+                .<Compra, CompraDomain> chunk(5000)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
