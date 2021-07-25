@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.StepExecutionListener;
-import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.DefaultBufferedReaderFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -22,14 +21,14 @@ public class CompraStepExecutionListener implements StepExecutionListener {
     @Value("process/base_teste.txt")
     private Resource inputFile;
 
-    @Value("${file.lines.skip}")
-    private int linesToSkip;
-
     @Value("${file.reader.key}")
     private String fileReaderKey;
 
     @Value("${file.name.key}")
     private String fileNameKey;
+
+    @Value("${file.columns.key}")
+    private String fileColumnsKey;
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
@@ -40,9 +39,11 @@ public class CompraStepExecutionListener implements StepExecutionListener {
             if (!stepExecution.getExecutionContext().containsKey(fileReaderKey)) {
                 bufferedReader = this.getBufferedReaderInstance();
                 fileReader = FileReader.builder().bufferedReader(bufferedReader).build();
-                fileReader.skipLines(linesToSkip, bufferedReader);
 
-                stepExecution.getExecutionContext().put(fileReaderKey, FileReader.builder().bufferedReader(bufferedReader).build());
+                String firstLine = bufferedReader.readLine();
+
+                stepExecution.getExecutionContext().put(fileColumnsKey, firstLine);
+                stepExecution.getExecutionContext().put(fileReaderKey, fileReader);
                 stepExecution.getExecutionContext().putString(fileNameKey, this.inputFile.getFilename());
             }
         } catch(IOException e) {

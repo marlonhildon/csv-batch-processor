@@ -2,6 +2,7 @@ package br.com.mh.csv.batch;
 
 import br.com.mh.csv.domain.Compra;
 import br.com.mh.csv.domain.CompraRaw;
+import br.com.mh.csv.domain.FileColumn;
 import br.com.mh.csv.util.CompraMapper;
 import br.com.mh.csv.util.FileReader;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.BufferedReader;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 public class CompraItemReader implements ItemStreamReader<Compra> {
@@ -25,17 +26,18 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
     @Value("${file.name.key}")
     private String fileNameKey;
 
-    @Value("${file.lines.skip}")
-    private int linesToSkip;
+    @Value("${file.columns.key}")
+    private String fileColumnsKey;
 
     @Autowired
     private CompraMapper compraMapper;
 
-    private int currentLineReaded = linesToSkip;
+    private int currentLineReaded = 1;
     private FileReader fileReader;
     private BufferedReader bufferedReader;
     private LineMapper<CompraRaw> lineMapper;
     private String fileName;
+    private String fileColumns;
 
     /**
      * Processa os arquivos sem delimitadores específicos. <br>
@@ -71,10 +73,12 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
         this.fileReader = Objects.requireNonNull((FileReader) executionContext.get(fileReaderKey));
-        this.lineMapper = this.fileReader.getLineMapper();
         this.bufferedReader = this.fileReader.getBufferedReader();
         this.fileName = executionContext.getString(fileNameKey);
-        this.currentLineReaded += linesToSkip;
+        this.fileColumns = executionContext.getString(this.fileColumnsKey);
+
+        LinkedHashMap<FileColumn, TreeSet<Integer>> columnIndexesHashMap = fileReader.getFileColumnsIndexes(fileColumns);
+        this.lineMapper = this.fileReader.getLineMapper(new ArrayList<>(columnIndexesHashMap.values()));
     }
 
     @Override
