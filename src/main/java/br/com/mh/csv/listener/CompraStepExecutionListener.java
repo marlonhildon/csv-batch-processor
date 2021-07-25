@@ -1,7 +1,10 @@
 package br.com.mh.csv.listener;
 
+import br.com.mh.csv.util.FileReader;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.*;
+import org.springframework.batch.core.ExitStatus;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.item.file.DefaultBufferedReaderFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -10,6 +13,7 @@ import org.springframework.stereotype.Component;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -21,33 +25,26 @@ public class CompraStepExecutionListener implements StepExecutionListener {
     @Value("${lines.skip}")
     private int linesToSkip;
 
-    @Value("${is.lines.skipped}")
-    private Boolean isLinesSkipped;
-
-    private static final String bufferedReaderKey = "bufferedReader";
-    private static final String allItemsReadedKey = "allItemsReaded";
+    private static final String fileReaderKey = "fileReader";
+    private static final String isReadingOverKey = "isReadingOver";
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
+        FileReader fileReader = null;
+        BufferedReader bufferedReader = null;
+
         try {
-            if (!stepExecution.getExecutionContext().containsKey(bufferedReaderKey)) {
-                stepExecution.getExecutionContext().put(bufferedReaderKey, this.getBufferedReaderInstance());
-                this.skipLines(linesToSkip, isLinesSkipped, (BufferedReader) stepExecution.getExecutionContext().get(bufferedReaderKey));
-                this.isLinesSkipped = Boolean.TRUE;
+            if (!stepExecution.getExecutionContext().containsKey(fileReaderKey)) {
+                bufferedReader = this.getBufferedReaderInstance();
+                fileReader = FileReader.builder().bufferedReader(bufferedReader).build();
+                stepExecution.getExecutionContext().put(fileReaderKey, FileReader.builder().bufferedReader(bufferedReader).build());
+                fileReader.skipLines(linesToSkip, bufferedReader);
             }
-            if (!stepExecution.getExecutionContext().containsKey(allItemsReadedKey)) {
-                stepExecution.getExecutionContext().put(allItemsReadedKey, Boolean.FALSE);
+            if (!stepExecution.getExecutionContext().containsKey(isReadingOverKey)) {
+                stepExecution.getExecutionContext().put(isReadingOverKey, Boolean.FALSE);
             }
         } catch(IOException e) {
-            log.error("Falha ao instanciar BufferedReader: {}", e.getMessage());
-        } finally {
-            try {
-                BufferedReader bufferedReader = (BufferedReader) stepExecution.getExecutionContext().get(bufferedReaderKey);
-                Boolean allItemsReaded = (Boolean) stepExecution.getExecutionContext().get(allItemsReadedKey);
-                this.closeBufferedReader(allItemsReaded, bufferedReader);
-            } catch (IOException e) {
-                log.error("Falha ao fechar BufferedReader: {}", e.getMessage());
-            }
+            log.error("Falha no uso do BufferedReader: {}", e.getMessage());
         }
     }
 
@@ -65,30 +62,6 @@ public class CompraStepExecutionListener implements StepExecutionListener {
         return new DefaultBufferedReaderFactory().create(inputFile, StandardCharsets.UTF_8.name());
     }
 
-    /**
-     * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.
-     * @param linesToSkip a quantidade de linhas a serem puladas
-     * @param isLinesSkipped informa se as linhas já foram puladas
-     * @param bufferedReader o BufferedReader usado no {@link br.com.mh.csv.batch.CompraItemReader}
-     * @throws IOException lançável pelo método readLine do BufferedReader
-     */
-    private void skipLines(int linesToSkip, Boolean isLinesSkipped, BufferedReader bufferedReader) throws IOException {
-        if (isLinesSkipped) {
-            for(int i=1; i<=linesToSkip; i++) {
-                bufferedReader.readLine();
-            }
-            log.info("Quantidade de linhas puladas na leitura: {}", linesToSkip);
-        }
-    }
 
-    /**
-     * Fecha o BufferedReader do CompraItemReader.
-     * @throws IOException lançável pelo método close do BufferedReader.
-     */
-    private void closeBufferedReader(Boolean allItemsReaded, BufferedReader bufferedReader) throws IOException {
-        if(allItemsReaded && bufferedReader != null) {
-            bufferedReader.close();
-        }
-    }
 
 }
