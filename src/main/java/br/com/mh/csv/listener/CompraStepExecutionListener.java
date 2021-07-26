@@ -27,8 +27,8 @@ public class CompraStepExecutionListener implements StepExecutionListener {
     @Value("${file.name.key}")
     private String fileNameKey;
 
-    @Value("${file.columns.key}")
-    private String fileColumnsKey;
+    @Value("${file.column.line}")
+    private Integer fileColumnLineNumber;
 
     @Override
     public void beforeStep(StepExecution stepExecution) {
@@ -40,9 +40,8 @@ public class CompraStepExecutionListener implements StepExecutionListener {
                 bufferedReader = this.getBufferedReaderInstance();
                 fileReader = FileReader.builder().bufferedReader(bufferedReader).build();
 
-                String firstLine = bufferedReader.readLine();
+                fileReader.skipLines(fileColumnLineNumber, bufferedReader);
 
-                stepExecution.getExecutionContext().put(fileColumnsKey, firstLine);
                 stepExecution.getExecutionContext().put(fileReaderKey, fileReader);
                 stepExecution.getExecutionContext().putString(fileNameKey, this.inputFile.getFilename());
             }

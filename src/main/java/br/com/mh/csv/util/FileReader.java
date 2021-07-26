@@ -9,12 +9,10 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
-import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
 
 @Getter
 @Builder
@@ -22,6 +20,19 @@ import java.util.*;
 public class FileReader implements Serializable {
 
     private final transient BufferedReader bufferedReader;
+
+    /**
+     * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.
+     * @param linesToSkip a quantidade de linhas a serem puladas
+     * @param bufferedReader o BufferedReader usado no {@link br.com.mh.csv.batch.CompraItemReader}
+     * @throws IOException lançável pelo método readLine do BufferedReader
+     */
+    public void skipLines(int linesToSkip, BufferedReader bufferedReader) throws IOException {
+        for(int i=1; i<=linesToSkip; i++) {
+            bufferedReader.readLine();
+        }
+        log.info("Quantidade de linhas puladas na leitura: {}", linesToSkip);
+    }
 
     /**
      * Fecha o BufferedReader do CompraItemReader.
@@ -39,51 +50,17 @@ public class FileReader implements Serializable {
      * A divisão das colunas presentes no arquivo lido é realizada por intervalo de caracteres. <br>
      * @return LineMapper&lt;CompraRaw&gt; o LineMapper a ser usado para mapear de string para instância.
      */
-    public LineMapper<CompraRaw> getLineMapper(List<TreeSet<Integer>> columnIndexes) {
+    public LineMapper<CompraRaw> getLineMapper() {
         DefaultLineMapper<CompraRaw> defaultLineMapper = new DefaultLineMapper<>();
         FixedLengthTokenizer fixedLengthTokenizer = new FixedLengthTokenizer();
 
         fixedLengthTokenizer.setNames(CompraRaw.getAllOrderedAttributesNamesArray());
-        fixedLengthTokenizer.setColumns(FileColumn.getAllOrderedColumnRanges(columnIndexes));
+        fixedLengthTokenizer.setColumns(FileColumn.getAllOrderedColumnRanges());
 
         defaultLineMapper.setLineTokenizer(fixedLengthTokenizer);
         defaultLineMapper.setFieldSetMapper(new BeanWrapperFieldSetMapper<>() {{ setTargetType(CompraRaw.class); }});
 
         return defaultLineMapper;
-    }
-
-    public LinkedHashMap<FileColumn, TreeSet<Integer>> getFileColumnsIndexes(String columnsLine) {
-        LinkedHashMap<FileColumn, TreeSet<Integer>> fileColumnHashMap = new LinkedHashMap<>();
-
-        if(StringUtils.hasText(columnsLine)) {
-            for(FileColumn fileColumn : FileColumn.values()) {
-                TreeSet<Integer> indexesTreeSet = new TreeSet<>();
-                int columnStartIndex = columnsLine.indexOf(fileColumn.getColumnName());
-                int columnEndIndex = columnStartIndex + fileColumn.getColumnName().length();
-                indexesTreeSet.add(++columnStartIndex); // Incremento para corrigir índice zero-based
-                indexesTreeSet.add(columnEndIndex);
-
-                fileColumnHashMap.put(fileColumn, indexesTreeSet);
-            }
-        }
-
-        return this.getSortedLinkedHashMap(fileColumnHashMap);
-    }
-
-    private LinkedHashMap<FileColumn, TreeSet<Integer>> getSortedLinkedHashMap(LinkedHashMap<FileColumn, TreeSet<Integer>> linkedHashMap) {
-        LinkedHashMap<FileColumn, TreeSet<Integer>> linkedHashMapSorted = new LinkedHashMap<>();
-        List<TreeSet<Integer>> indexList = new ArrayList<>(linkedHashMap.values());
-        indexList.sort(Comparator.comparing(TreeSet::first));
-
-        for(TreeSet<Integer> indexInterval : indexList) {
-            for(FileColumn column : linkedHashMap.keySet()) {
-                if(linkedHashMap.get(column).equals(indexInterval)) {
-                    linkedHashMapSorted.put(column, indexInterval);
-                }
-            }
-        }
-
-        return linkedHashMapSorted;
     }
 
 }
