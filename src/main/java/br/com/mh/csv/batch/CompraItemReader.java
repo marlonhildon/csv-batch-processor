@@ -35,7 +35,7 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
     private BufferedReader bufferedReader;
     private LineMapper<CompraRaw> lineMapper;
     private String fileName;
-    private boolean instantiated;
+    private boolean instantiatedByExecutionContext;
 
     /**
      * Processa os arquivos sem delimitadores específicos. <br>
@@ -57,7 +57,7 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
                 ++currentLineReaded;
                 compraRaw = this.lineMapper.mapLine(line, currentLineReaded);
             }
-            return this.mapCompraRawToCompra(compraRaw, this.currentLineReaded, this.fileName);
+            return this.mapCompraRawToCompra(compraRaw);
         } catch (Exception exception) {
             throw new RuntimeException("Erro ao ler arquivo de entrada: " + exception.getMessage());
         } finally {
@@ -70,12 +70,12 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
 
     @Override
     public void open(ExecutionContext executionContext) throws ItemStreamException {
-        if (!this.instantiated) {
+        if (!this.instantiatedByExecutionContext) {
             this.fileReader = Objects.requireNonNull((FileReader) executionContext.get(fileReaderKey));
             this.bufferedReader = this.fileReader.getBufferedReader();
             this.fileName = executionContext.getString(fileNameKey);
             this.lineMapper = this.fileReader.getLineMapper();
-            this.instantiated = true;
+            this.instantiatedByExecutionContext = true;
         }
     }
 
@@ -89,13 +89,13 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
 
     }
 
-    private Compra mapCompraRawToCompra(CompraRaw compraRaw, Integer currentLineReaded, String fileName) {
+    private Compra mapCompraRawToCompra(CompraRaw compraRaw) {
         Compra compra = null;
 
         if(compraRaw != null) {
             compra = this.compraMapper.toCompra(compraRaw);
-            compra.setLinhaArquivo(currentLineReaded);
-            compra.setNomeArquivo(fileName);
+            compra.setLinhaArquivo(this.currentLineReaded);
+            compra.setNomeArquivo(this.fileName);
         }
 
         return compra;
