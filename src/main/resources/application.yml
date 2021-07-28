@@ -1,6 +1,7 @@
 spring:
+  profile: dev
   datasource:
-    url: jdbc:postgresql://localhost:8081/TRANSACOES
+    jdbcUrl: jdbc:postgresql://localhost:8081/TRANSACOES?currentSchema=DBCOMPRA
     driver-class-name: org.postgresql.Driver
     username: csv-batch
     password: csv-batch
