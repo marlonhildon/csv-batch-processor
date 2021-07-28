@@ -2,8 +2,11 @@ package br.com.mh.csv.util;
 
 import br.com.mh.csv.domain.CompraRaw;
 import br.com.mh.csv.domain.FileColumn;
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
@@ -15,11 +18,14 @@ import java.io.IOException;
 import java.io.Serializable;
 
 @Getter
-@Builder
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Slf4j
+@JsonIgnoreProperties({"bufferedReader", "lineMapper"})
 public class FileReader implements Serializable {
 
-    private final transient BufferedReader bufferedReader;
+    private transient BufferedReader bufferedReader;
 
     /**
      * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.

@@ -16,6 +16,9 @@ public class CompraDomain extends CompraRaw {
     private Integer id;
     private String nomeArquivo;
     private Integer linhaArquivo;
+    private Integer idErroCpf;
+    private Integer idErroLojaMaisFrequente;
+    private Integer idErroLojaUltimaCompra;
     private String nomeUsuario;
     private LocalDateTime dataInclusao;
     private LocalDateTime dataAlteracao;

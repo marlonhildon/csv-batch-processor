@@ -38,7 +38,7 @@ public class CompraStepExecutionListener implements StepExecutionListener {
         try {
             if (!stepExecution.getExecutionContext().containsKey(fileReaderKey)) {
                 bufferedReader = this.getBufferedReaderInstance();
-                fileReader = FileReader.builder().bufferedReader(bufferedReader).build();
+                fileReader = new FileReader(bufferedReader);
 
                 fileReader.skipLines(fileColumnLineNumber, bufferedReader);
 

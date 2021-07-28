@@ -18,13 +18,13 @@
 		<org.projectlombok.version>1.18.20</org.projectlombok.version>
 		<org.mapstruct.version>1.4.2.Final</org.mapstruct.version>
 		<lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+		<org.springframework.boot.jdbc.version>2.5.2</org.springframework.boot.jdbc.version>
 	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-batch</artifactId>
 		</dependency>
-
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
@@ -33,7 +33,7 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.20</version>
+			<version>${org.projectlombok.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -50,6 +50,11 @@
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>${org.mapstruct.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jdbc</artifactId>
+			<version>${org.springframework.boot.jdbc.version}</version>
 		</dependency>
 	</dependencies>
 

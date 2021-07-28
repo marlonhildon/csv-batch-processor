@@ -57,6 +57,7 @@ public class SpringBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .allowStartIfComplete(true)
                 .listener(compraStepExecutionListener)
                 .build();
     }
