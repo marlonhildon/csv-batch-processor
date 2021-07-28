@@ -1,4 +1,4 @@
-create or replace function validate_cpf(cpf varchar(11))
+create or replace function DBCOMPRA.validate_cpf(cpf varchar(11))
 returns boolean as $$
 declare
 	dig_1 smallint := substring(cpf from 1 for 1);
