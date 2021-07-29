@@ -2,6 +2,7 @@ package br.com.mh.csv.batch;
 
 import br.com.mh.csv.domain.Compra;
 import br.com.mh.csv.domain.CompraRaw;
+import br.com.mh.csv.exception.CompraItemReaderException;
 import br.com.mh.csv.util.CompraMapper;
 import br.com.mh.csv.util.FileReader;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,7 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
     private String fileNameKey;
 
     @Value("${file.column.line}")
-    private Integer currentLineReaded;
+    private Long currentLineReaded;
 
     @Autowired
     private CompraMapper compraMapper;
@@ -55,15 +56,12 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
         try {
             if((line = this.bufferedReader.readLine()) != null) {
                 ++currentLineReaded;
-                compraRaw = this.lineMapper.mapLine(line, currentLineReaded);
+                compraRaw = this.lineMapper.mapLine(line, currentLineReaded.intValue());
             }
             return this.mapCompraRawToCompra(compraRaw);
         } catch (Exception exception) {
-            throw new RuntimeException("Erro ao ler arquivo de entrada: " + exception.getMessage());
-        } finally {
-            if(line == null) {
-                this.fileReader.closeBufferedReader();
-            }
+            log.error("Erro ao ler arquivo de entrada: {}", exception.getMessage());
+            throw new CompraItemReaderException("Erro ao ler arquivo de entrada: " + exception.getMessage(), exception);
         }
 
     }
@@ -94,7 +92,7 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
 
         if(compraRaw != null) {
             compra = this.compraMapper.toCompra(compraRaw);
-            compra.setLinhaArquivo(this.currentLineReaded.longValue());
+            compra.setLinhaArquivo(this.currentLineReaded);
             compra.setNomeArquivo(this.fileName);
         }
 

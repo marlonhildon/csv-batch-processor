@@ -1,6 +1,7 @@
 package br.com.mh.csv.batch;
 
 import br.com.mh.csv.domain.CompraDomain;
+import br.com.mh.csv.exception.CompraItemWritterException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,8 +26,8 @@ public class CompraItemWriter implements ItemWriter<CompraDomain> {
         try {
             jdbcTemplate.batchUpdate(sqlProcedureInsertCompra, SqlParameterSourceUtils.createBatch(list));
         } catch(Exception e) {
-            log.error("Error in Batch Update: {}", e.getMessage());
-            throw e;
+            log.error("Erro no Batch Update: {}", e.getMessage());
+            throw new CompraItemWritterException("Erro no Batch Update: " +  e.getMessage(), e);
         }
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 
 @Configuration
 @EnableBatchProcessing
@@ -47,6 +50,11 @@ public class SpringBatchConfig {
         return new CompraItemWriter();
     }
 
+    @Bean
+    public TaskExecutor taskExecutor() {
+        return new SimpleAsyncTaskExecutor("spring_batch_thread"); //Suporte à threads
+    }
+
     @Bean(name = "firstStep")
     protected Step firstStep(ItemReader<Compra> reader,
                             ItemProcessor<Compra, CompraDomain> processor,
@@ -57,6 +65,8 @@ public class SpringBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .taskExecutor(this.taskExecutor())
+                .throttleLimit(10)
                 .allowStartIfComplete(true)
                 .listener(compraStepExecutionListener)
                 .build();
@@ -65,6 +75,7 @@ public class SpringBatchConfig {
     @Bean(name = "compraBatchJob")
     public Job job(@Qualifier("firstStep") Step firstStep) {
         return jobs.get("compraBatchJob")
+                .incrementer(new RunIdIncrementer())
                 .start(firstStep)
                 .build();
     }
