@@ -2,7 +2,7 @@ DO $body$
 BEGIN
     RAISE NOTICE 'Criando procedure insert_compra';
 
-    CREATE PROCEDURE insert_compra(
+    CREATE PROCEDURE DBCOMPRA.insert_compra(
         cpf varchar,
         flag_private varchar,
         flag_incompleto varchar,
@@ -88,7 +88,7 @@ BEGIN
         end if;
 
         --Persistência
-        INSERT INTO dbcompra.compras
+        INSERT INTO DBCOMPRA.compras
         (
             cpf, flag_private, flag_incompleto, data_ultima_compra, ticket_medio, ticket_ultima_compra,
             loja_mais_frequente, loja_ultima_compra, nome_arquivo, linha_arquivo, id_erro_cpf, id_erro_loja_mais_frequente,

@@ -2,7 +2,7 @@ DO $body$
 BEGIN
     RAISE NOTICE 'Criando função is_numeric';
 
-    CREATE OR REPLACE FUNCTION is_numeric(text) RETURNS BOOLEAN AS $$
+    CREATE OR REPLACE FUNCTION DBCOMPRA.is_numeric(text) RETURNS BOOLEAN AS $$
     DECLARE x NUMERIC;
     BEGIN
         x = $1::NUMERIC;

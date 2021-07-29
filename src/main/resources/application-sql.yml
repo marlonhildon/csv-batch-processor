@@ -1,0 +1,7 @@
+sql:
+  procedure:
+    insert-compra: >
+      call insert_compra(
+          :cpf, :flagPrivate, :flagIncompleto, :dataUltimaCompra, :ticketMedio, :ticketUltimaCompra,
+          :lojaMaisFrequente, :lojaUltimaCompra, :nomeArquivo, :linhaArquivo, :nomeUsuario
+      );

@@ -12,6 +12,6 @@ import lombok.Setter;
 public class Compra extends CompraRaw {
 
     private String nomeArquivo;
-    private Integer linhaArquivo;
+    private Long linhaArquivo;
 
 }

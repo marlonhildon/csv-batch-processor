@@ -5,17 +5,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class CompraDomain extends CompraRaw {
+public class CompraDomain extends Compra {
 
     private Integer id;
-    private String nomeArquivo;
-    private Integer linhaArquivo;
     private Integer idErroCpf;
     private Integer idErroLojaMaisFrequente;
     private Integer idErroLojaUltimaCompra;

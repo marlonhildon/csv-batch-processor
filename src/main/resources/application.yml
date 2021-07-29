@@ -7,6 +7,9 @@ spring:
     password: csv-batch
   batch:
     initialize-schema: always
+  profiles:
+    include:
+      - sql
 
 file:
   reader:
@@ -17,3 +20,6 @@ file:
     key: fileLine
   column:
     line: 1
+
+persistence:
+  user-name: csv-batch-processor

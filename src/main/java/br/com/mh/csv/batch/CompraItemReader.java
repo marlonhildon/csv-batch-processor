@@ -94,7 +94,7 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
 
         if(compraRaw != null) {
             compra = this.compraMapper.toCompra(compraRaw);
-            compra.setLinhaArquivo(this.currentLineReaded);
+            compra.setLinhaArquivo(this.currentLineReaded.longValue());
             compra.setNomeArquivo(this.fileName);
         }
 

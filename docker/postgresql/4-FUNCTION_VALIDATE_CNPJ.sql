@@ -2,7 +2,7 @@ DO $body$
 BEGIN
     RAISE NOTICE 'Criando função validate_cnpj';
 
-    create or replace function validate_cnpj(cnpj varchar(14))
+    create or replace function DBCOMPRA.validate_cnpj(cnpj varchar(14))
     returns boolean as $$
     declare
         dig_1 smallint := substring(cnpj from 1 for 1);
