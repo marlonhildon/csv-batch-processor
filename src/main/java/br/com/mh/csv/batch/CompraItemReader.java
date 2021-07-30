@@ -10,42 +10,25 @@ import org.springframework.batch.item.*;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.util.StringUtils;
 
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.util.Objects;
 
 @Slf4j
-public class CompraItemReader implements ItemStreamReader<Compra> {
-
-    @Value("${file.reader.key}")
-    private String fileReaderKey;
-
-    @Value("${file.line.key}")
-    private String fileLineKey;
-
-    @Value("${file.name.key}")
-    private String fileNameKey;
-
-    @Value("${file.column.line}")
-    private Long currentLineReaded;
-
-    @Value("${file.column.line}")
-    private Integer fileColumnLineNumber;
+public class CompraItemReader implements ItemReader<Compra> {
 
     @Autowired
     private CompraMapper compraMapper;
 
-    private FileReader fileReader;
-    private BufferedReader bufferedReader;
-    private LineMapper<CompraRaw> lineMapper;
+    private final BufferedReader bufferedReader;
+    private final LineMapper<CompraRaw> lineMapper;
+    private Long currentLineReaded;
     private String fileName;
-    private boolean instantiatedByExecutionContext;
-    private String threadName;
 
-    public CompraItemReader(FileReader fileReader) {
-        this.fileReader = fileReader;
+    public CompraItemReader(FileReader fileReader, Long currentLineReaded, String fileName) {
+        this.bufferedReader = fileReader.getBufferedReader();
+        this.lineMapper = fileReader.getLineMapper();
+        this.currentLineReaded = currentLineReaded;
+        this.fileName = fileName;
     }
 
     /**
@@ -62,19 +45,12 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
     public Compra read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
         CompraRaw compraRaw = null;
         String line = null;
-        this.bufferedReader = this.fileReader.getBufferedReader();
-        this.lineMapper = this.fileReader.getLineMapper();
+
         try {
             if((line = this.bufferedReader.readLine()) != null) {
                 ++currentLineReaded;
                 compraRaw = this.lineMapper.mapLine(line, currentLineReaded.intValue());
             }
-
-            if(StringUtils.hasText(threadName)) {
-                log.info("{} - ItemReader iniciado com o arquivo {}", threadName, fileName );
-                threadName = null;
-            }
-
 
             return this.mapCompraRawToCompra(compraRaw);
         } catch (Exception exception) {
@@ -82,38 +58,6 @@ public class CompraItemReader implements ItemStreamReader<Compra> {
             throw new CompraItemReaderException("Erro ao ler arquivo de entrada: " + exception.getMessage(), exception);
         }
 
-    }
-
-    @Override
-    public void open(ExecutionContext executionContext) throws ItemStreamException {
-        if (!this.instantiatedByExecutionContext) {
-            this.bufferedReader = this.fileReader.getBufferedReader();
-            this.fileName = executionContext.getString(fileNameKey);
-            this.lineMapper = this.fileReader.getLineMapper();
-            this.threadName = executionContext.getString("threadName");
-            this.skipLines();
-            this.instantiatedByExecutionContext = true;
-        }
-
-    }
-
-    @Override
-    public void update(ExecutionContext executionContext) throws ItemStreamException {
-
-    }
-
-    @Override
-    public void close() throws ItemStreamException {
-
-    }
-
-    private void skipLines() {
-        try {
-            this.fileReader.skipLines(this.fileColumnLineNumber, this.bufferedReader);
-        } catch (IOException e) {
-            log.error("Falha no uso do BufferedReader: {}", e.getMessage());
-            throw new CompraItemReaderException("Falha no uso do BufferedReader: " + e.getMessage(), e);
-        }
     }
 
     private Compra mapCompraRawToCompra(CompraRaw compraRaw) {

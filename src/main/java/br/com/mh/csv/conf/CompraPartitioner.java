@@ -22,6 +22,7 @@ public class CompraPartitioner implements Partitioner {
     private final Resource[] inputFilesArray;
     private final String fileNameKey;
     private final String fileReaderKey;
+    private final int linesToSkip;
 
     @Override
     public Map<String, ExecutionContext> partition(int gridSize) {
@@ -38,6 +39,8 @@ public class CompraPartitioner implements Partitioner {
 
             try {
                 BufferedReader bufferedReader = this.getBufferedReaderInstance(inputFilesArray[i]);
+                FileReader fileReader = new FileReader(bufferedReader);
+                fileReader.skipLines(linesToSkip, fileReader.getBufferedReader());
                 executionContext.put(fileReaderKey, new FileReader(bufferedReader));
             } catch(IOException e) {
                 log.error("Falha no uso do BufferedReader: {}", e.getMessage());

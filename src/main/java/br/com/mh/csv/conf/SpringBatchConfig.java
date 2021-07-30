@@ -9,6 +9,7 @@ import br.com.mh.csv.listener.CompraStepExecutionListener;
 import br.com.mh.csv.util.FileReader;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.StepExecutionListener;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
@@ -36,9 +37,6 @@ public class SpringBatchConfig {
     @Autowired
     private StepBuilderFactory steps;
 
-    @Autowired
-    private CompraStepExecutionListener compraStepExecutionListener;
-
     @Value("${file.path}")
     private Resource[] inputFilesArray;
 
@@ -48,17 +46,29 @@ public class SpringBatchConfig {
     @Value("${file.reader.key}")
     private String fileReaderKey;
 
+    @Value("${file.column.line}")
+    private Integer fileColumnLineNumber;
+
     private static final int THREAD_LIMIT = 5;
+
+    @StepScope
+    @Bean(name = "listener")
+    public StepExecutionListener listener(@Value("#{stepExecutionContext[fileReader]}") FileReader fileReader) {
+        return new CompraStepExecutionListener(fileReader);
+    }
 
     @Bean(name = "partitioner")
     public Partitioner partitioner() {
-        return new CompraPartitioner(inputFilesArray, fileNameKey, fileReaderKey);
+        return new CompraPartitioner(inputFilesArray, fileNameKey, fileReaderKey, fileColumnLineNumber);
     }
 
     @Bean
     @StepScope
-    public ItemReader<Compra> itemReader(@Value("#{stepExecutionContext[fileReader]}") FileReader fileReader) {
-        return new CompraItemReader(fileReader);
+    public ItemReader<Compra> itemReader(
+            @Value("#{stepExecutionContext[fileReader]}") FileReader fileReader,
+            @Value("#{stepExecutionContext[fileName]}") String fileName) {
+
+        return new CompraItemReader(fileReader, fileColumnLineNumber.longValue(), fileName);
     }
 
     @Bean
@@ -78,15 +88,16 @@ public class SpringBatchConfig {
         return steps.get("masterStep")
                 .partitioner("slaveStep", partitioner)
                 .step(step)
-                .gridSize(Math.min(inputFilesArray.length, THREAD_LIMIT)) // A quantidade de arquivos não pode superar o n° de threads
+                .gridSize(THREAD_LIMIT)
                 .taskExecutor(new SimpleAsyncTaskExecutor())
                 .build();
     }
 
     @Bean(name = "slaveStep")
     protected Step slaveStep(ItemReader<Compra> reader,
-                            ItemProcessor<Compra, CompraDomain> processor,
-                             ItemWriter<CompraDomain> writer) {
+                             ItemProcessor<Compra, CompraDomain> processor,
+                             ItemWriter<CompraDomain> writer,
+                             StepExecutionListener listener) {
 
         return steps.get("slaveStep")
                 .<Compra, CompraDomain> chunk(5000)
@@ -94,7 +105,7 @@ public class SpringBatchConfig {
                 .processor(processor)
                 .writer(writer)
                 .allowStartIfComplete(true)
-                .listener(compraStepExecutionListener)
+                .listener(listener)
                 .taskExecutor(new SimpleAsyncTaskExecutor())
                 .throttleLimit(THREAD_LIMIT)
                 .build();
