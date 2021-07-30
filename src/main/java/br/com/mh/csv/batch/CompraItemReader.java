@@ -21,8 +21,8 @@ public class CompraItemReader implements ItemReader<Compra> {
 
     private final BufferedReader bufferedReader;
     private final LineMapper<CompraRaw> lineMapper;
-    private Long currentLineReaded;
-    private String fileName;
+    private volatile Long currentLineReaded;
+    private final String fileName;
 
     public CompraItemReader(FileReader fileReader, Long currentLineReaded, String fileName) {
         this.bufferedReader = fileReader.getBufferedReader();

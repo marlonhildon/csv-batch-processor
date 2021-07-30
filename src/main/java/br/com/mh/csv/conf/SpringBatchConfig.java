@@ -47,9 +47,14 @@ public class SpringBatchConfig {
     private String fileReaderKey;
 
     @Value("${file.column.line}")
-    private Integer fileColumnLineNumber;
+    private volatile Integer fileColumnLineNumber;
 
     private static final int THREAD_LIMIT = 5;
+
+    @Bean(name = "partitioner")
+    public Partitioner partitioner() {
+        return new CompraPartitioner(inputFilesArray, fileNameKey, fileReaderKey, fileColumnLineNumber);
+    }
 
     @StepScope
     @Bean(name = "listener")
@@ -57,13 +62,8 @@ public class SpringBatchConfig {
         return new CompraStepExecutionListener(fileReader);
     }
 
-    @Bean(name = "partitioner")
-    public Partitioner partitioner() {
-        return new CompraPartitioner(inputFilesArray, fileNameKey, fileReaderKey, fileColumnLineNumber);
-    }
-
-    @Bean
     @StepScope
+    @Bean(name = "itemReader")
     public ItemReader<Compra> itemReader(
             @Value("#{stepExecutionContext[fileReader]}") FileReader fileReader,
             @Value("#{stepExecutionContext[fileName]}") String fileName) {
@@ -71,20 +71,20 @@ public class SpringBatchConfig {
         return new CompraItemReader(fileReader, fileColumnLineNumber.longValue(), fileName);
     }
 
-    @Bean
     @StepScope
+    @Bean(name = "itemProcessor")
     public ItemProcessor<Compra, CompraDomain> itemProcessor() {
         return new CompraItemProcessor();
     }
 
-    @Bean
     @StepScope
-    public ItemWriter<CompraDomain> itemWriter(@Value("#{stepExecutionContext[threadName]}")String threadName) {
+    @Bean(name = "itemWriter")
+    public ItemWriter<CompraDomain> getItemWriter(@Value("#{stepExecutionContext[threadName]}")String threadName) {
         return new CompraItemWriter(threadName);
     }
 
     @Bean(name = "masterStep")
-    public Step firstStepManager(@Qualifier("slaveStep") Step step, @Qualifier("partitioner") Partitioner partitioner) {
+    public Step manageMasterStep(@Qualifier("slaveStep") Step step, @Qualifier("partitioner") Partitioner partitioner) {
         return steps.get("masterStep")
                 .partitioner("slaveStep", partitioner)
                 .step(step)
@@ -94,10 +94,11 @@ public class SpringBatchConfig {
     }
 
     @Bean(name = "slaveStep")
-    protected Step slaveStep(ItemReader<Compra> reader,
-                             ItemProcessor<Compra, CompraDomain> processor,
-                             ItemWriter<CompraDomain> writer,
-                             StepExecutionListener listener) {
+    protected Step manageSlaveStep(
+            @Qualifier("itemReader") ItemReader<Compra> reader,
+            @Qualifier("itemProcessor") ItemProcessor<Compra, CompraDomain> processor,
+            @Qualifier("itemWriter") ItemWriter<CompraDomain> writer,
+            @Qualifier("listener") StepExecutionListener listener) {
 
         return steps.get("slaveStep")
                 .<Compra, CompraDomain> chunk(5000)
@@ -112,7 +113,7 @@ public class SpringBatchConfig {
     }
 
     @Bean(name = "compraBatchJob")
-    public Job job(@Qualifier("masterStep") Step firstStepManager) {
+    public Job manageJob(@Qualifier("masterStep") Step firstStepManager) {
         return jobs.get("compraBatchJob")
                 .incrementer(new RunIdIncrementer())
                 .start(firstStepManager)
