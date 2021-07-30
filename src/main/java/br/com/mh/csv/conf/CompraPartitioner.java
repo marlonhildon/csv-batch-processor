@@ -42,6 +42,7 @@ public class CompraPartitioner implements Partitioner {
                 FileReader fileReader = new FileReader(lineNumberReader);
                 fileReader.skipLines(linesToSkip, fileReader.getLineNumberReader());
                 executionContext.put(fileReaderKey, new FileReader(lineNumberReader));
+                executionContext.putString("filePath", inputFilesArray[i].getFile().getAbsolutePath());
             } catch(IOException e) {
                 log.error("Falha no uso do LineNumberReader: {}", e.getMessage());
                 throw new CompraItemReaderException("Falha no uso do LineNumberReader: {}" + e.getMessage(), e);

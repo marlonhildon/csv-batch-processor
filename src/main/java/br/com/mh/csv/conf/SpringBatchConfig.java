@@ -37,7 +37,7 @@ public class SpringBatchConfig {
     @Autowired
     private StepBuilderFactory steps;
 
-    @Value("${file.path}")
+    @Value("${file.path.read}")
     private Resource[] inputFilesArray;
 
     @Value("${file.name.key}")
@@ -58,8 +58,13 @@ public class SpringBatchConfig {
 
     @StepScope
     @Bean(name = "listener")
-    public StepExecutionListener listener(@Value("#{stepExecutionContext[fileReader]}") FileReader fileReader) {
-        return new CompraStepExecutionListener(fileReader);
+    public StepExecutionListener listener(
+            @Value("#{stepExecutionContext[fileReader]}") FileReader fileReader,
+            @Value("#{stepExecutionContext[filePath]}") String fileReadPath,
+            @Value("${file.path.success}") String folderSuccessPath,
+            @Value("${file.path.error}") String folderErrorPath,
+            @Value("#{stepExecutionContext[fileName]}") String fileName) {
+        return new CompraStepExecutionListener(fileReader, fileReadPath, folderSuccessPath, folderErrorPath, fileName);
     }
 
     @StepScope

@@ -42,7 +42,7 @@ public class CompraItemReader implements ItemReader<Compra> {
      */
     @Override
     public Compra read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
-        String line;    
+        String line;
         CompraRaw compraRaw = null;
         Integer currentLineNumber = null;
 

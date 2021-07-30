@@ -24,7 +24,10 @@ file:
     key: fileLine
   column:
     line: 1
-  path: file:${user.dir}/../process/*.txt
+  path:
+    read: file:${user.dir}/../process/*.txt
+    success: ${user.dir}/../processed/
+    error: ${user.dir}/../error/
 
 persistence:
   user-name: csv-batch-processor
