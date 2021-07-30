@@ -9,9 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.batch.item.*;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
-import java.io.BufferedReader;
+import java.io.LineNumberReader;
 
 @Slf4j
 public class CompraItemReader implements ItemReader<Compra> {
@@ -19,13 +18,13 @@ public class CompraItemReader implements ItemReader<Compra> {
     @Autowired
     private CompraMapper compraMapper;
 
-    private final BufferedReader bufferedReader;
+    private final LineNumberReader lineNumberReader;
     private final LineMapper<CompraRaw> lineMapper;
-    private volatile Long currentLineReaded;
+    private Long currentLineReaded;
     private final String fileName;
 
     public CompraItemReader(FileReader fileReader, Long currentLineReaded, String fileName) {
-        this.bufferedReader = fileReader.getBufferedReader();
+        this.lineNumberReader = fileReader.getLineNumberReader();
         this.lineMapper = fileReader.getLineMapper();
         this.currentLineReaded = currentLineReaded;
         this.fileName = fileName;
@@ -43,16 +42,18 @@ public class CompraItemReader implements ItemReader<Compra> {
      */
     @Override
     public Compra read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
+        String line;    
         CompraRaw compraRaw = null;
-        String line = null;
+        Integer currentLineNumber = null;
 
         try {
-            if((line = this.bufferedReader.readLine()) != null) {
-                ++currentLineReaded;
-                compraRaw = this.lineMapper.mapLine(line, currentLineReaded.intValue());
+            if((line = this.lineNumberReader.readLine()) != null) {
+                currentLineNumber = lineNumberReader.getLineNumber();
+                compraRaw = this.lineMapper.mapLine(line, currentLineNumber);
+
             }
 
-            return this.mapCompraRawToCompra(compraRaw);
+            return this.mapCompraRawToCompra(compraRaw, currentLineNumber);
         } catch (Exception exception) {
             log.error("Erro ao ler arquivo de entrada: {}", exception.getMessage());
             throw new CompraItemReaderException("Erro ao ler arquivo de entrada: " + exception.getMessage(), exception);
@@ -60,12 +61,12 @@ public class CompraItemReader implements ItemReader<Compra> {
 
     }
 
-    private Compra mapCompraRawToCompra(CompraRaw compraRaw) {
+    private Compra mapCompraRawToCompra(CompraRaw compraRaw, Integer currentLineReaded) {
         Compra compra = null;
 
         if(compraRaw != null) {
             compra = this.compraMapper.toCompra(compraRaw);
-            compra.setLinhaArquivo(this.currentLineReaded);
+            compra.setLinhaArquivo(currentLineReaded.longValue());
             compra.setNomeArquivo(this.fileName);
         }
 

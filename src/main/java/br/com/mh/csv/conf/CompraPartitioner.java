@@ -9,8 +9,8 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.file.DefaultBufferedReaderFactory;
 import org.springframework.core.io.Resource;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -38,13 +38,13 @@ public class CompraPartitioner implements Partitioner {
             executionContext.putString(fileNameKey, fileName);
 
             try {
-                BufferedReader bufferedReader = this.getBufferedReaderInstance(inputFilesArray[i]);
-                FileReader fileReader = new FileReader(bufferedReader);
-                fileReader.skipLines(linesToSkip, fileReader.getBufferedReader());
-                executionContext.put(fileReaderKey, new FileReader(bufferedReader));
+                LineNumberReader lineNumberReader = this.getLineNumberReaderInstance(inputFilesArray[i]);
+                FileReader fileReader = new FileReader(lineNumberReader);
+                fileReader.skipLines(linesToSkip, fileReader.getLineNumberReader());
+                executionContext.put(fileReaderKey, new FileReader(lineNumberReader));
             } catch(IOException e) {
-                log.error("Falha no uso do BufferedReader: {}", e.getMessage());
-                throw new CompraItemReaderException("Falha no uso do BufferedReader: {}" + e.getMessage(), e);
+                log.error("Falha no uso do LineNumberReader: {}", e.getMessage());
+                throw new CompraItemReaderException("Falha no uso do LineNumberReader: {}" + e.getMessage(), e);
             }
 
             partitionHashMap.put("partition" + i, executionContext);
@@ -54,12 +54,12 @@ public class CompraPartitioner implements Partitioner {
     }
 
     /**
-     * Instancia o BufferedReader do CompraItemReader.
+     * Retorna uma instância de LineNumberReader de acordo com o arquivo a ser lido.
      * @throws IOException lançável pelo método create do DefaultBufferedReaderFactory.
      */
-    private BufferedReader getBufferedReaderInstance(Resource resource) throws IOException {
-        log.info("Instanciando o BufferedReader");
-        return new DefaultBufferedReaderFactory().create(resource, StandardCharsets.UTF_8.name());
+    private LineNumberReader getLineNumberReaderInstance(Resource resource) throws IOException {
+        log.info("Instanciando o LineNumberReader");
+        return new LineNumberReader(new DefaultBufferedReaderFactory().create(resource, StandardCharsets.UTF_8.name()));
     }
 
 }

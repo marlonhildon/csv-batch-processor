@@ -47,7 +47,7 @@ public class SpringBatchConfig {
     private String fileReaderKey;
 
     @Value("${file.column.line}")
-    private volatile Integer fileColumnLineNumber;
+    private Integer fileColumnLineNumber;
 
     private static final int THREAD_LIMIT = 5;
 

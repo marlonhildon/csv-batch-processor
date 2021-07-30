@@ -25,12 +25,12 @@ public class CompraStepExecutionListener implements StepExecutionListener {
 
     @Override
     public ExitStatus afterStep(StepExecution stepExecution) {
-        // Fecha o BufferedReader após o fim do Step para assegurar que nenhuma thread usará um BufferedReader fechado.
+        // Fecha o LineNumberReader após o fim do Step para assegurar que nenhuma thread usará um LineNumberReader fechado.
         try {
-            fileReader.closeBufferedReader();
+            fileReader.closeLineNumberReader();
         } catch (IOException e) {
-            log.error("Falha ao fechar BufferedReader: {}", e.getMessage());
-            throw new CompraItemWritterException("Falha ao fechar BufferedReader: " + e.getMessage(), e);
+            log.error("Falha ao fechar LineNumberReader: {}", e.getMessage());
+            throw new CompraItemWritterException("Falha ao fechar LineNumberReader: " + e.getMessage(), e);
         }
         return null;
     }

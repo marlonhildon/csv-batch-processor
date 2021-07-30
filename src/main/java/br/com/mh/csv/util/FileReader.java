@@ -13,8 +13,8 @@ import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.FixedLengthTokenizer;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.LineNumberReader;
 import java.io.Serializable;
 
 @Getter
@@ -22,32 +22,32 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @Slf4j
-@JsonIgnoreProperties({"bufferedReader", "lineMapper"})
+@JsonIgnoreProperties({"lineNumberReader", "lineMapper"})
 public class FileReader implements Serializable {
 
-    private transient BufferedReader bufferedReader;
+    private transient LineNumberReader lineNumberReader;
 
     /**
-     * Pula uma determinada quantidade de linhas lidas pelo BufferedReader.
+     * Pula uma determinada quantidade de linhas lidas pelo LineNumberReader.
      * @param linesToSkip a quantidade de linhas a serem puladas
-     * @param bufferedReader o BufferedReader usado no {@link br.com.mh.csv.batch.CompraItemReader}
-     * @throws IOException lançável pelo método readLine do BufferedReader
+     * @param lineNumberReader o LineNumberReader usado
+     * @throws IOException lançável pelo método readLine do LineNumberReader
      */
-    public void skipLines(int linesToSkip, BufferedReader bufferedReader) throws IOException {
+    public void skipLines(int linesToSkip, LineNumberReader lineNumberReader) throws IOException {
         for(int i=1; i<=linesToSkip; i++) {
-            bufferedReader.readLine();
+            lineNumberReader.readLine();
         }
         log.info("Quantidade de linhas puladas na leitura: {}", linesToSkip);
     }
 
     /**
-     * Fecha o BufferedReader do CompraItemReader.
-     * @throws IOException lançável pelo método close do BufferedReader.
+     * Fecha o LineNumberReader.
+     * @throws IOException lançável pelo método close do LineNumberReader.
      */
-    public void closeBufferedReader() throws IOException {
-        if(this.bufferedReader != null) {
-            bufferedReader.close();
-            log.info("BufferedReader fechado com sucesso");
+    public void closeLineNumberReader() throws IOException {
+        if(this.lineNumberReader != null) {
+            lineNumberReader.close();
+            log.info("LineNumberReader fechado com sucesso");
         }
     }
 
