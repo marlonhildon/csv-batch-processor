@@ -6,21 +6,25 @@ import br.com.mh.csv.batch.CompraItemWriter;
 import br.com.mh.csv.domain.Compra;
 import br.com.mh.csv.domain.CompraDomain;
 import br.com.mh.csv.listener.CompraStepExecutionListener;
+import br.com.mh.csv.util.FileReader;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
+import org.springframework.batch.core.partition.support.Partitioner;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.core.task.TaskExecutor;
 
 @Configuration
 @EnableBatchProcessing
@@ -35,48 +39,72 @@ public class SpringBatchConfig {
     @Autowired
     private CompraStepExecutionListener compraStepExecutionListener;
 
-    @Bean
-    public ItemReader<Compra> itemReader() {
-        return new CompraItemReader();
+    @Value("${file.path}")
+    private Resource[] inputFilesArray;
+
+    @Value("${file.name.key}")
+    private String fileNameKey;
+
+    @Value("${file.reader.key}")
+    private String fileReaderKey;
+
+    private static final int THREAD_LIMIT = 5;
+
+    @Bean(name = "partitioner")
+    public Partitioner partitioner() {
+        return new CompraPartitioner(inputFilesArray, fileNameKey, fileReaderKey);
     }
 
     @Bean
+    @StepScope
+    public ItemReader<Compra> itemReader(@Value("#{stepExecutionContext[fileReader]}") FileReader fileReader) {
+        return new CompraItemReader(fileReader);
+    }
+
+    @Bean
+    @StepScope
     public ItemProcessor<Compra, CompraDomain> itemProcessor() {
         return new CompraItemProcessor();
     }
 
     @Bean
-    public ItemWriter<CompraDomain> itemWriter() {
-        return new CompraItemWriter();
+    @StepScope
+    public ItemWriter<CompraDomain> itemWriter(@Value("#{stepExecutionContext[threadName]}")String threadName) {
+        return new CompraItemWriter(threadName);
     }
 
-    @Bean
-    public TaskExecutor taskExecutor() {
-        return new SimpleAsyncTaskExecutor("spring_batch_thread"); //Suporte à threads
+    @Bean(name = "masterStep")
+    public Step firstStepManager(@Qualifier("slaveStep") Step step, @Qualifier("partitioner") Partitioner partitioner) {
+        return steps.get("masterStep")
+                .partitioner("slaveStep", partitioner)
+                .step(step)
+                .gridSize(Math.min(inputFilesArray.length, THREAD_LIMIT)) // A quantidade de arquivos não pode superar o n° de threads
+                .taskExecutor(new SimpleAsyncTaskExecutor())
+                .build();
     }
 
-    @Bean(name = "firstStep")
-    protected Step firstStep(ItemReader<Compra> reader,
+    @Bean(name = "slaveStep")
+    protected Step slaveStep(ItemReader<Compra> reader,
                             ItemProcessor<Compra, CompraDomain> processor,
                              ItemWriter<CompraDomain> writer) {
 
-        return steps.get("firstStep")
+        return steps.get("slaveStep")
                 .<Compra, CompraDomain> chunk(5000)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                .taskExecutor(this.taskExecutor())
-                .throttleLimit(10)
                 .allowStartIfComplete(true)
                 .listener(compraStepExecutionListener)
+                .taskExecutor(new SimpleAsyncTaskExecutor())
+                .throttleLimit(THREAD_LIMIT)
                 .build();
     }
 
     @Bean(name = "compraBatchJob")
-    public Job job(@Qualifier("firstStep") Step firstStep) {
+    public Job job(@Qualifier("masterStep") Step firstStepManager) {
         return jobs.get("compraBatchJob")
                 .incrementer(new RunIdIncrementer())
-                .start(firstStep)
+                .start(firstStepManager)
                 .build();
     }
 }

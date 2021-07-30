@@ -10,6 +10,10 @@ spring:
   profiles:
     include:
       - sql
+  data:
+    jpa:
+      repositories:
+        enabled: false
 
 file:
   reader:
@@ -20,6 +24,7 @@ file:
     key: fileLine
   column:
     line: 1
+  path: file:${user.dir}/../process/*.txt
 
 persistence:
   user-name: csv-batch-processor
