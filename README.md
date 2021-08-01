@@ -139,10 +139,53 @@ O relacionamento entre as tabelas *compras* e *erros* é:
     * O algoritmo usado para validar o CPF se chama ["módulo 11"](https://pt.wikipedia.org/wiki/Cadastro_de_Pessoas_F%C3%ADsicas#D%C3%ADgitos_verificadores)
     * O algoritmo validador do CNPJ [é semelhante ao do CPF](https://pt.wikipedia.org/wiki/Cadastro_Nacional_da_Pessoa_Jur%C3%ADdica#Algoritmo_de_Valida%C3%A7%C3%A3o[carece_de_fontes?])
 
+Após executar o docker-compose (veja a seção [Como executar](#como-executar)) a porta **5432** estará aberta para conexão com o banco de dados. Os dados para conexão são:
+* Porta: 5432
+* Host: localhost
+* Database: TRANSACOES
+* Usuário: csv-batch
+* Senha: csv-batch
+
+Exemplo de conexão usando o DBeaver:
+![Conexão via DBeaver](https://drive.google.com/uc?export=view&id=18PYbwaUEtNMy9YLdPQd2g-maVgIMBieJ)
+
+Após a conexão, recomenda-se usar uma query simples para verificar se as linhas foram persistidas.
+Exemplo:
+```SQL
+SELECT * FROM DBCOMPRA.compras
+```
+
 ## Como executar
-0. Criar as pastas ERROR, PROCESS e PROCESSED um diretório antes da raiz do clone deste repositório. O diretório CSV-BATCH-PROCESSOR, ERROR, PROCESS e PROCESSED devem permanecer lado a lado, conforme é mostrado pelo tópico [Arquitetura](#arquitetura).
+0. Criar as pastas ERROR, PROCESS e PROCESSED um diretório antes da raiz deste repositório. O diretório CSV-BATCH-PROCESSOR, ERROR, PROCESS e PROCESSED devem permanecer lado a lado, conforme é mostrado pelo tópico [Arquitetura](#arquitetura).
 1. Dado que o(s) arquivos(s) .txt a serem lidos estejam na pasta PROCESS
 2. Dado que o Docker junto com o Docker Compose esteja instalado no SO de execução deste repositório (veja como instalar em: [Install Docker Compose](https://docs.docker.com/compose/install/)
-3. Usar o comando ABCXYZ para executar o projeto
-4. Se os arquivos foram processados com sucesso, serão movidos para a pasta PROCESSED; se não, para a pasta ERROR
-5. Confira se a tabela DBCOMPRA.compras foi populada com as linhas dos arquivos, conforme descrito na seção [Banco de dados](#banco-de-dados)
+3. Estando dentro da pasta raiz deste repositório, usar o seguinte comando para iniciar:
+```text
+docker-compose -f .\csv-batch-docker-compose.yml up -d --build
+```
+4. Para acompanhar o log de execução do batch, use o comando:
+```text
+docker logs batch -f
+```
+O log de execução mostra o tempo de finalização do step (processo de leitura, validação e persistência das linhas dos arquivos) e o tempo total de execução do Batch:
+```text
+[...]
+2021-08-01 08:31:17.885  INFO 1 --- [           main] o.s.batch.core.step.AbstractStep         : Step: [masterStep] executed in 33ms
+2021-08-01 08:31:17.933  INFO 1 --- [           main] o.s.b.c.l.support.SimpleJobLauncher      : Job: [SimpleJob: [name=compraBatchJob]] completed with the following parameters: [{Dspring-boot.run.arguments=--threads.files=${THREADS_FILES} --threads.aux=${THREADS_AUX}, run.id=1}] and the following status: [COMPLETED] in 93ms
+2021-08-01 08:31:17.935  INFO 1 --- [           main] br.com.mh.csv.Application                : O Batch foi encerrado por completo após 2.2301302 segundos de execução.
+[...]
+```
+5. Se os arquivos foram processados com sucesso, serão movidos para a pasta PROCESSED; se não, para a pasta ERROR
+6. Confira se a tabela DBCOMPRA.compras foi populada com as linhas dos arquivos, conforme descrito na seção [Banco de dados](#banco-de-dados)
+7. Para encerrar a execução, use o comando:
+```text
+docker-compose -f .\csv-batch-docker-compose.yml down -v
+```
+
+## Threads
+Este batch possui suporte à threads. A quantidade de threads a serem utilizadas podem ser customizadas alterando o [Dockerfile](https://github.com/marlonhildon/csv-batch-processor/blob/master/Dockerfile) deste projeto.
+**Antes de executar o projeto docker-compose** (conforme explicado pela seção [Como executar](#como-executar) basta customizar as seguintes variáveis de ambiente:
+* THREAD_FILES: variável de ambiente que define quantos arquivos serão processados ao mesmo tempo, em paralelo. **Mínimo 1**
+* THREAD_AUX: variável de ambiente que define quantas threads auxiliares cada arquivo terá para acelerar o processamento. **Mínimo 0**
+
+Consulte o [Dockerfile do projeto](https://github.com/marlonhildon/csv-batch-processor/blob/e18b7295ac04b0962a208cf4d886b1afe670ad82/Dockerfile#L5).
