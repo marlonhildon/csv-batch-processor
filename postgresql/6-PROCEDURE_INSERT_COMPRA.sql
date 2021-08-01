@@ -13,7 +13,8 @@ BEGIN
         loja_ultima_compra varchar,
         nome_arquivo varchar(255),
         linha_arquivo bigint,
-        nome_usuario varchar(255)
+        nome_usuario varchar(255),
+        inout is_sucess boolean default NULL
     )
     LANGUAGE 'plpgsql' AS $$
     DECLARE
@@ -28,9 +29,9 @@ BEGIN
         loja_ultima_compra_sanitized varchar := regexp_replace(loja_ultima_compra,  '[^\w]+', '', 'g');
 
         --Validando se CPF e CNPJ são numéricos
-        is_cpf_numeric boolean := is_numeric(cpf_sanitized);
-        is_loja_mais_frequente_numeric boolean := is_numeric(loja_mais_frequente_sanitized);
-        is_loja_ultima_compra_numeric boolean := is_numeric(loja_ultima_compra_sanitized);
+        is_cpf_numeric boolean := DBCOMPRA.is_numeric(cpf_sanitized);
+        is_loja_mais_frequente_numeric boolean := DBCOMPRA.is_numeric(loja_mais_frequente_sanitized);
+        is_loja_ultima_compra_numeric boolean := DBCOMPRA.is_numeric(loja_ultima_compra_sanitized);
 
         --Validando se CPF e CNPJ possuem comprimento válidos
         is_cpf_valid_length boolean := case when length(cpf_sanitized) = 11 then true else false end;
@@ -52,39 +53,48 @@ BEGIN
         --------------------------------------------------------------------------------------------
         if NOT is_cpf_numeric then
             cpf_error_code = 1;
+            is_sucess = false;
         elsif NOT is_cpf_valid_length then
             cpf_error_code = 2;
+           	is_sucess = false;
         else
-            is_cpf_valid = validate_cpf(case when is_cpf_numeric then cpf_sanitized else null end);
+            is_cpf_valid = DBCOMPRA.validate_cpf(case when is_cpf_numeric then cpf_sanitized else null end);
         end if;
 
         if NOT is_loja_mais_frequente_numeric then
             loja_mais_frequente_error_code = 1;
+           	is_sucess = false;
         elsif NOT is_loja_mais_frequente_valid_length then
             loja_mais_frequente_error_code = 3;
+           	is_sucess = false;
         else
-            is_loja_mais_frequente_valid = validate_cnpj(case when is_loja_mais_frequente_numeric then loja_mais_frequente_sanitized else null end);
+            is_loja_mais_frequente_valid = DBCOMPRA.validate_cnpj(case when is_loja_mais_frequente_numeric then loja_mais_frequente_sanitized else null end);
         end if;
 
         if NOT is_loja_ultima_compra_numeric then
             loja_ultima_compra_error_code = 1;
+           	is_sucess = false;
         elsif NOT is_loja_ultima_compra_valid_length then
             loja_ultima_compra_error_code = 3;
+           	is_sucess = false;
         else
-            is_loja_ultima_compra_valid = validate_cnpj(case when is_loja_ultima_compra_numeric then loja_ultima_compra_sanitized else null end);
+            is_loja_ultima_compra_valid = DBCOMPRA.validate_cnpj(case when is_loja_ultima_compra_numeric then loja_ultima_compra_sanitized else null end);
         end if;
         --------------------------------------------------------------------------------------------
         --------------------------------------------------------------------------------------------
         if cpf_error_code is null and NOT is_cpf_valid then
             cpf_error_code = 4;
+           	is_sucess = false;
         end if;
 
         if loja_mais_frequente_error_code is null and NOT is_loja_mais_frequente_valid then
             loja_mais_frequente_error_code = 4;
+           	is_sucess = false;
         end if;
 
         if loja_ultima_compra_error_code is null and NOT is_loja_ultima_compra_valid then
             loja_ultima_compra_error_code = 4;
+           	is_sucess = false;
         end if;
 
         --Persistência
@@ -100,6 +110,12 @@ BEGIN
             loja_mais_frequente_sanitized, loja_ultima_compra_sanitized, nome_arquivo, linha_arquivo, cpf_error_code, loja_mais_frequente_error_code,
             loja_ultima_compra_error_code, nome_usuario, CURRENT_TIMESTAMP, NULL
         );
+
+       if is_sucess is null then
+       		is_sucess = true;
+       end if;
+
+      select is_sucess into is_sucess;
     END;
     $$;
 

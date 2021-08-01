@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: csv-batch
       POSTGRES_DB: TRANSACOES
     ports:
-      - '5432:5432'
+      - 5432:5432
     volumes:
       - ./postgresql:/docker-entrypoint-initdb.d
   batch:
@@ -22,3 +22,8 @@ services:
       - SPRING_DATASOURCE_JDBC_URL=jdbc:postgresql://db-postgresql:5432/TRANSACOES?currentSchema=DBCOMPRA
       - SPRING_DATASOURCE_USERNAME=csv-batch
       - SPRING_DATASOURCE_PASSWORD=csv-batch
+      - SPRING_PROFILES_ACTIVE=dev
+    volumes:
+      - ./../process:/process
+      - ./../processed:/processed
+      - ./../error:/error

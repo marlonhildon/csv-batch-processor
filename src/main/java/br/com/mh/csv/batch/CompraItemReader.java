@@ -6,7 +6,10 @@ import br.com.mh.csv.exception.CompraItemReaderException;
 import br.com.mh.csv.util.CompraMapper;
 import br.com.mh.csv.util.FileReader;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.item.*;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.NonTransientResourceException;
+import org.springframework.batch.item.ParseException;
+import org.springframework.batch.item.UnexpectedInputException;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -20,7 +23,7 @@ public class CompraItemReader implements ItemReader<Compra> {
 
     private final LineNumberReader lineNumberReader;
     private final LineMapper<CompraRaw> lineMapper;
-    private Long currentLineReaded;
+    private final Long currentLineReaded;
     private final String fileName;
 
     public CompraItemReader(FileReader fileReader, Long currentLineReaded, String fileName) {

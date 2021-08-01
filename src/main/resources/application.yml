@@ -31,3 +31,47 @@ file:
 
 persistence:
   user-name: csv-batch-processor
+
+threads:
+  aux: 0
+  files: 1
+
+---
+
+spring:
+  profile: dev-local
+  datasource:
+    jdbcUrl: jdbc:postgresql://localhost:5432/TRANSACOES?currentSchema=DBCOMPRA
+    driver-class-name: org.postgresql.Driver
+    username: csv-batch
+    password: csv-batch
+  batch:
+    initialize-schema: always
+  profiles:
+    include:
+      - sql
+  data:
+    jpa:
+      repositories:
+        enabled: false
+
+file:
+  reader:
+    key: fileReader
+  name:
+    key: fileName
+  line:
+    key: fileLine
+  column:
+    line: 1
+  path:
+    read: file:${user.dir}/../process/*.txt
+    success: ${user.dir}/../processed/
+    error: ${user.dir}/../error/
+
+persistence:
+  user-name: csv-batch-processor
+
+threads:
+  aux: 0
+  files: 1
