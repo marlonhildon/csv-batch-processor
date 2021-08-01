@@ -105,17 +105,17 @@ A estrutura de elementos do DB é a seguinte:
 ```text
 TRANSACOES
 │
-├───DBCOMPRA
-│   └───Tabelas
-│           compras
-│           erros
-│
-│   └───Funções
-│           is_numeric(text)
-│           validate_cnpj(varchar)
-│           validate_cpf(varchar)
-│
-│   └───Procedures
+└───DBCOMPRA
+    ├───Tabelas
+    │       compras
+    │       erros
+    │
+    ├───Funções
+    │        is_numeric(text)
+    │        validate_cnpj(varchar)
+    │        validate_cpf(varchar)
+    │
+    └───Procedures
             insert_compra(varchar, varchar, varchar, varchar, varchar, varchar, varchar, varchar, varchar, bigint, varchar)
 ```
 
@@ -126,7 +126,18 @@ Todos os scripts de criação dos itens acima se encontram no diretório [docker
 * Função is_numeric: verifica se um (text) passado é um número
 * Função validate_cnpj: de acordo com o algoritmo de geração de CNPJ, valida se um CNPJ é válido
 * Função validate_cpf: de acordo com o algoritmo de geração de CPF, valida se um CPF é válido
-* Procedure insert_compra: responsável por validar e persistir uma linha lida do arquivo de entrada 
+* Procedure insert_compra: responsável por validar, remover caracteres especiais e persistir uma linha lida do arquivo de entrada
+
+O relacionamento entre as tabelas *compras* e *erros* é:
+![Relacionamento entre compras e erros](https://drive.google.com/uc?export=view&id=1WzL2xFKOqz4nbI550wH5OjHz6bm0Bj5r)
+
+*Cada CPF/CNPJ pode ter apenas um erro, mas o mesmo erro pode estar atrelado a diversas compras*, já que os erros possíveis de CPF/CNPJ são finitos:
+* CPF/CNPJ não é numérico (ou seja: possui números e letras)
+* CPF não possui 11 algarismos (auto-explicativo)
+* CNPJ não possui 14 algarismos (auto-explicativo)
+* CPF/CNPJ inválido de acordo com o algoritmo de validação
+    * O algoritmo usado para validar o CPF se chama ["módulo 11"](https://pt.wikipedia.org/wiki/Cadastro_de_Pessoas_F%C3%ADsicas#D%C3%ADgitos_verificadores)
+    * O algoritmo validador do CNPJ [é semelhante ao do CPF](https://pt.wikipedia.org/wiki/Cadastro_Nacional_da_Pessoa_Jur%C3%ADdica#Algoritmo_de_Valida%C3%A7%C3%A3o[carece_de_fontes?])
 
 ## Como executar
 0. Criar as pastas ERROR, PROCESS e PROCESSED um diretório antes da raiz do clone deste repositório. O diretório CSV-BATCH-PROCESSOR, ERROR, PROCESS e PROCESSED devem permanecer lado a lado, conforme é mostrado pelo tópico [Arquitetura](#arquitetura).
