@@ -1,0 +1,24 @@
+version: '3'
+services:
+  db:
+    container_name: db-postgresql
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: csv-batch
+      POSTGRES_USER: csv-batch
+      POSTGRES_DB: TRANSACOES
+    ports:
+      - '5432:5432'
+    volumes:
+      - ./postgresql:/docker-entrypoint-initdb.d
+  batch:
+    build:
+      context: .
+    container_name: batch
+    depends_on:
+      - db
+    environment:
+      - SPRING_DATASOURCE_JDBC_URL=jdbc:postgresql://db-postgresql:5432/TRANSACOES?currentSchema=DBCOMPRA
+      - SPRING_DATASOURCE_USERNAME=csv-batch
+      - SPRING_DATASOURCE_PASSWORD=csv-batch

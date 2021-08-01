@@ -1,10 +1,10 @@
 spring:
   profile: dev
   datasource:
-    jdbcUrl: jdbc:postgresql://localhost:8081/TRANSACOES?currentSchema=DBCOMPRA
+    jdbcUrl: ${SPRING_DATASOURCE_JDBC_URL}
     driver-class-name: org.postgresql.Driver
-    username: csv-batch
-    password: csv-batch
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   batch:
     initialize-schema: always
   profiles:
