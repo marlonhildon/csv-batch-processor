@@ -1,9 +1,11 @@
 # csv-batch-processor
-Repositório Spring Batch responsável por ler arquivos txt no padrão csv, validar suas linhas e persisti-las num banco de dados PostgreSQL Docker Compose.
+Repositório Spring Batch responsável por ler arquivos '.txt' no padrão 'csv', validar suas linhas e persisti-las num banco de dados 'PostgreSQL' Docker Compose.
+
 ## Tecnologias usadas
 - Maven 3.8.1
 - Spring Boot 2.4.8
 - JDK 11
+
 ## Arquitetura
 A partir do ecossistema Spring Framework, foram usados o Spring Boot para iniciar a aplicação e o Spring Batch para processamento de dados em lotes.
 O repositório consiste em um único módulo Maven com a seguinte estrutura:<br>
@@ -77,6 +79,7 @@ ERROR
 PROCESS
 PROCESSED
 ```
+
 ## Estrutura do(s) arquivo(s) lido(s)
 O arquivo possui extensão .txt e não possui separador de colunas. Logo, a estratégia utilizada foi atribuir um intervalo específico de caracteres para representar cada coluna.
 As colunas e seus intervalos de caracteres são:
@@ -184,7 +187,7 @@ docker-compose -f .\csv-batch-docker-compose.yml down -v
 
 ## Threads
 Este batch possui suporte à threads. A quantidade de threads a serem utilizadas podem ser customizadas alterando o [Dockerfile](https://github.com/marlonhildon/csv-batch-processor/blob/master/Dockerfile) deste projeto.
-**Antes de executar o projeto docker-compose** (conforme explicado pela seção [Como executar](#como-executar) basta customizar as seguintes variáveis de ambiente:
+**Antes de executar o projeto docker-compose** (seção [Como executar](#como-executar) basta customizar as seguintes variáveis de ambiente:
 * THREAD_FILES: variável de ambiente que define quantos arquivos serão processados ao mesmo tempo, em paralelo. **Mínimo 1**
 * THREAD_AUX: variável de ambiente que define quantas threads auxiliares cada arquivo terá para acelerar o processamento. **Mínimo 0**
 
