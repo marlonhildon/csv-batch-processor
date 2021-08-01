@@ -160,13 +160,18 @@ SELECT * FROM DBCOMPRA.compras
 
 ## Como executar
 0. Criar as pastas ERROR, PROCESS e PROCESSED um diretório antes da raiz deste repositório. O diretório CSV-BATCH-PROCESSOR, ERROR, PROCESS e PROCESSED devem permanecer lado a lado, conforme é mostrado pelo tópico [Arquitetura](#arquitetura).
-1. Dado que o(s) arquivos(s) .txt a serem lidos estejam na pasta PROCESS
-2. Dado que o Docker junto com o Docker Compose esteja instalado no SO de execução deste repositório (veja como instalar em: [Install Docker Compose](https://docs.docker.com/compose/install/)
-3. Estando dentro da pasta raiz deste repositório, usar o seguinte comando para iniciar:
+1. Compile o repositório usando o Maven Wrapper do projeto. Entre no diretório raiz do projeto e, a partir do terminal, execute o comando: 
+```text
+.\mvnw clean install -U
+```
+É necessário ter o JDK 11 configurado na variável de ambiente **JAVA_HOME**. [Veja aqui como configurar.](https://qastack.com.br/programming/52511778/how-to-install-openjdk-11-on-windows)
+3. Dado que o(s) arquivos(s) .txt a serem lidos estejam na pasta PROCESS
+4. Dado que o Docker junto com o Docker Compose esteja instalado no SO de execução deste repositório (veja como instalar em: [Install Docker Compose](https://docs.docker.com/compose/install/)
+5. Estando dentro da pasta raiz deste repositório, usar o seguinte comando para iniciar:
 ```text
 docker-compose -f .\csv-batch-docker-compose.yml up -d --build
 ```
-4. Para acompanhar o log de execução do batch, use o comando:
+5. Para acompanhar o log de execução do batch, use o comando:
 ```text
 docker logs batch -f
 ```
@@ -178,9 +183,9 @@ O log de execução mostra o tempo de finalização do step (processo de leitura
 2021-08-01 08:31:17.935  INFO 1 --- [           main] br.com.mh.csv.Application                : O Batch foi encerrado por completo após 2.2301302 segundos de execução.
 [...]
 ```
-5. Se os arquivos foram processados com sucesso, serão movidos para a pasta PROCESSED; se não, para a pasta ERROR
-6. Confira se a tabela DBCOMPRA.compras foi populada com as linhas dos arquivos, conforme descrito na seção [Banco de dados](#banco-de-dados)
-7. Para encerrar a execução, use o comando:
+6. Se os arquivos foram processados com sucesso, serão movidos para a pasta PROCESSED; se não, para a pasta ERROR
+7. Confira se a tabela DBCOMPRA.compras foi populada com as linhas dos arquivos, conforme descrito na seção [Banco de dados](#banco-de-dados)
+8. Para encerrar a execução, use o comando:
 ```text
 docker-compose -f .\csv-batch-docker-compose.yml down -v
 ```
