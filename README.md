@@ -209,6 +209,6 @@ docker-compose -f ./csv-batch-docker-compose.yml down -v
 Este batch possui suporte à threads. A quantidade de threads a serem utilizadas podem ser customizadas alterando o [Dockerfile](https://github.com/marlonhildon/csv-batch-processor/blob/master/Dockerfile) deste projeto.
 **Antes de executar o projeto docker-compose** (seção [Como executar](#como-executar) basta customizar as seguintes variáveis de ambiente:
 * THREAD_FILES: variável de ambiente que define quantos arquivos serão processados ao mesmo tempo, em paralelo. **Mínimo 1**
-* THREAD_AUX: variável de ambiente que define quantas threads auxiliares cada arquivo terá para acelerar o processamento. **Mínimo 0**
+* THREAD_AUX: variável de ambiente que define quantas threads auxiliares cada arquivo terá para acelerar o processamento. **Mínimo 1**
 
 Consulte o [Dockerfile do projeto](https://github.com/marlonhildon/csv-batch-processor/blob/e18b7295ac04b0962a208cf4d886b1afe670ad82/Dockerfile#L5).
