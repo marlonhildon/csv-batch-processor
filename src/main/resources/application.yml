@@ -73,5 +73,5 @@ persistence:
   user-name: csv-batch-processor
 
 threads:
-  aux: 0
+  aux: 1
   files: 1
